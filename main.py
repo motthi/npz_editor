@@ -17,7 +17,7 @@ if __name__ == "__main__":
             npz_editor.event_save_npz_file()
         elif main_evt == 'Save As::-SAVEAS-':
             npz_editor.event_saveas_npz_file()
-        elif main_evt == 'npz_elems':
-            npz_editor.event_npz_elems_changed(main_vals['npz_elems'])
+        elif main_evt == 'npz_keys':
+            npz_editor.event_npz_keys_changed(main_vals['npz_keys'])
         elif main_evt == 'omission':
             npz_editor.event_omission_ckb(not main_vals['omission'])

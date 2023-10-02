@@ -28,20 +28,20 @@ class NpzEditor():
         menubar = sg.Menubar([['File', ['Open::-OPEN-', 'Save::-SAVE-', 'Save As::-SAVEAS-', 'Exit::-EXIT-']]], key='menubar')
         filename_txt = sg.Text('', key='filename')
         omission_chkbox = sg.Checkbox('Data omission', key='omission', default=False, enable_events=True)
-        npz_elems_list = sg.Listbox([], key='npz_elems', enable_events=True, horizontal_scroll=True, expand_y=True)
+        npz_keys_list = sg.Listbox([], key='npz_keys', enable_events=True, horizontal_scroll=True, expand_x=True, expand_y=True)
         npz_shape_txt = sg.Text('', key='np_shape')
         data_tab_ml = sg.Multiline(size=(80, 25), font=(font_style_console, 12), expand_x=True, expand_y=True, key='dataview', background_color='#FFFFFF', horizontal_scroll=True, disabled=True)
         layouts = [
             [menubar],
             [filename_txt, omission_chkbox],
-            [npz_elems_list, sg.Column([[npz_shape_txt], [data_tab_ml]], expand_x=True, expand_y=True)]
+            [npz_keys_list, sg.Column([[npz_shape_txt], [data_tab_ml]], expand_x=True, expand_y=True)]
         ]
         return layouts
 
     def bind_shortcutkeys(self):
         self.window.bind('<Control-o>', 'Open::-OPEN-')
         self.window.bind('<Control-S>', 'Save As::-SAVEAS-')
-        self.window['npz_elems'].Widget.bind('<Double-Button-1>', self.event_data)
+        self.window['npz_keys'].Widget.bind('<Double-Button-1>', self.event_key_list_doubleclick)
 
     def event_open_npz_file(self):
         filename = sg.popup_get_file(
@@ -80,9 +80,9 @@ class NpzEditor():
 
     def listup_keys(self):
         self.data = dict(sorted(self.data.items(), key=lambda x: x[0]))
-        self.window['npz_elems'].update(values=self.data.keys())
+        self.window['npz_keys'].update(values=self.data.keys())
 
-    def event_npz_elems_changed(self, k: str):
+    def event_npz_keys_changed(self, k: str):
         self.window['np_shape'].update(f"Shape: {self.data[k[0]].shape}")
         self.window['dataview'].update(self.data[k[0]])
 
@@ -92,13 +92,13 @@ class NpzEditor():
         else:
             np.set_printoptions(threshold=np.inf)
 
-    def event_data(self, btn_evt: sg.tk.Event):
+    def event_key_list_doubleclick(self, btn_evt: sg.tk.Event):
         row = btn_evt.widget.curselection()[0]
-        self.edit_data_name(row)
+        self.edit_key_name(row)
 
-    def edit_data_name(self, row):
+    def edit_key_name(self, row):
         edit = False
-        data_lists = self.window['npz_elems'].get_list_values()
+        data_lists = self.window['npz_keys'].get_list_values()
         old_txt = data_lists[row]
 
         def callback(evt, row, txt, k):
@@ -122,7 +122,7 @@ class NpzEditor():
             return
 
         edit = True
-        list_box = self.window['npz_elems'].Widget
+        list_box = self.window['npz_keys'].Widget
         x, y, w, h = list_box.bbox(row)
 
         frame = sg.tk.Frame(list_box)
