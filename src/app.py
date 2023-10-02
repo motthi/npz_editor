@@ -42,6 +42,7 @@ class NpzEditor():
         self.window.bind('<Control-o>', 'Open::-OPEN-')
         self.window.bind('<Control-S>', 'Save As::-SAVEAS-')
         self.window['npz_keys'].Widget.bind('<Double-Button-1>', self.event_key_list_doubleclick)
+        self.window['npz_keys'].Widget.bind('<F2>', self.event_key_list_doubleclick)
 
     def event_open_npz_file(self):
         filename = sg.popup_get_file(
@@ -83,6 +84,8 @@ class NpzEditor():
         self.window['npz_keys'].update(values=self.data.keys())
 
     def event_npz_keys_changed(self, k: str):
+        if len(k) == 0:
+            return
         self.window['np_shape'].update(f"Shape: {self.data[k[0]].shape}")
         self.window['dataview'].update(self.data[k[0]])
 
@@ -93,6 +96,8 @@ class NpzEditor():
             np.set_printoptions(threshold=np.inf)
 
     def event_key_list_doubleclick(self, btn_evt: sg.tk.Event):
+        if self.data is None:
+            return
         row = btn_evt.widget.curselection()[0]
         self.edit_key_name(row)
 
