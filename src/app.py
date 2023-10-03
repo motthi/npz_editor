@@ -9,6 +9,9 @@ class NpzEditor():
         self.data = None
         self.create_window()
 
+    def __del__(self):
+        self.window.close()
+
     def create_window(self) -> sg.Window:
         self.window = sg.Window(
             'NPZ Editor',
@@ -20,9 +23,7 @@ class NpzEditor():
         )
         self.window.force_focus()
         self.bind_shortcutkeys()
-
-    def __del__(self):
-        self.window.close()
+        self.window['npz_keys'].Widget.focus_set()
 
     def layout(self):
         menubar = sg.Menubar([['File', ['Open::-OPEN-', 'Save::-SAVE-', 'Save As::-SAVEAS-', 'Exit::-EXIT-']]], key='menubar')
@@ -41,8 +42,10 @@ class NpzEditor():
     def bind_shortcutkeys(self):
         self.window.bind('<Control-o>', 'Open::-OPEN-')
         self.window.bind('<Control-S>', 'Save As::-SAVEAS-')
+        self.window.bind('<Up>', '-SELECT_KEY_UP-')
+        self.window.bind('<Down>', '-SELECT_KEY_DOWN-')
+        self.window.bind('<F2>', '-EDIT_NPZ_KEY-')
         self.window['npz_keys'].Widget.bind('<Double-Button-1>', self.event_key_list_doubleclick)
-        self.window['npz_keys'].Widget.bind('<F2>', self.event_key_list_doubleclick)
 
     def event_open_npz_file(self):
         filename = sg.popup_get_file(
@@ -78,16 +81,24 @@ class NpzEditor():
         self.data = dict(np.load(src, allow_pickle=True))
         self.window['filename'].update(src)
         self.listup_keys()
+        self.event_npz_keys_change(0)
 
     def listup_keys(self):
         self.data = dict(sorted(self.data.items(), key=lambda x: x[0]))
         self.window['npz_keys'].update(values=self.data.keys())
 
-    def event_npz_keys_changed(self, k: str):
+    def event_npz_keys_selected(self, k: str):
         if len(k) == 0:
             return
-        self.window['np_shape'].update(f"Shape: {self.data[k[0]].shape}")
-        self.window['dataview'].update(self.data[k[0]])
+        self.window['np_shape'].update(f"Shape: {self.data[k].shape}")
+        self.window['dataview'].update(self.data[k])
+
+    def event_npz_keys_change(self, row: int):
+        row = len(self.data) - 1 if row < 0 else row
+        row = 0 if row >= len(self.data) else row
+        self.window['npz_keys'].Widget.selection_clear(0, 'end')
+        self.window['npz_keys'].Widget.selection_set(row)
+        self.event_npz_keys_selected(self.window['npz_keys'].get_list_values()[row])
 
     def event_omission_ckb(self, is_omit: bool):
         if is_omit:
@@ -95,10 +106,10 @@ class NpzEditor():
         else:
             np.set_printoptions(threshold=np.inf)
 
-    def event_key_list_doubleclick(self, btn_evt: sg.tk.Event):
+    def event_key_list_doubleclick(self):
         if self.data is None:
             return
-        row = btn_evt.widget.curselection()[0]
+        row = self.window['npz_keys'].widget.curselection()[0]
         self.edit_key_name(row)
 
     def edit_key_name(self, row):
@@ -122,6 +133,7 @@ class NpzEditor():
             widget.destroy()
             widget.master.destroy()
             edit = False
+            self.window['npz_keys'].Widget.selection_set(row)
 
         if edit or row < 0:
             return
